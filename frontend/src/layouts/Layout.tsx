@@ -2,9 +2,13 @@ import { Outlet } from 'react-router-dom';
 import { TopNavbar } from '../components/TopNavbar';
 import { SessionTimeoutModal } from '../components/SessionTimeoutModal';
 import { useInactivityLogout } from '../hooks/useInactivityLogout';
+import { useApiErrorHandler } from '../hooks/useApiErrorHandler';
 
 export const Layout = () => {
     const { showWarning, countdown, stayLoggedIn, logout } = useInactivityLogout();
+
+    // Connect API errors to toast notifications
+    useApiErrorHandler();
 
     return (
         <div className="min-h-screen bg-background text-text-main flex flex-col">

@@ -34,8 +34,8 @@ export const SpendingChart = ({ data }: SpendingChartProps) => {
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-white text-lg">Monthly Spending Trend</h3>
                     <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${isSpendingDecreasing
-                            ? 'bg-emerald-500/10 text-emerald-400'
-                            : 'bg-rose-500/10 text-rose-400'
+                        ? 'bg-emerald-500/10 text-emerald-400'
+                        : 'bg-rose-500/10 text-rose-400'
                         }`}>
                         {isSpendingDecreasing ? (
                             <>
@@ -52,18 +52,18 @@ export const SpendingChart = ({ data }: SpendingChartProps) => {
                 </div>
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-800">
-                        <p className="text-xs text-gray-500 mb-1">Daily Average</p>
-                        <p className="text-sm font-semibold text-white">₦{avgDaily.toFixed(2)}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
+                    <div className="bg-slate-900/50 rounded-lg p-2 sm:p-3 border border-slate-800">
+                        <p className="text-xs text-gray-500 mb-0.5 sm:mb-1">Daily Average</p>
+                        <p className="text-xs sm:text-sm font-semibold text-white truncate">₦{avgDaily.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                     </div>
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-800">
-                        <p className="text-xs text-gray-500 mb-1">Highest Day</p>
-                        <p className="text-sm font-semibold text-orange-400">₦{highestDay.totalSpent.toFixed(2)}</p>
+                    <div className="bg-slate-900/50 rounded-lg p-2 sm:p-3 border border-slate-800">
+                        <p className="text-xs text-gray-500 mb-0.5 sm:mb-1">Highest Day</p>
+                        <p className="text-xs sm:text-sm font-semibold text-orange-400 truncate">₦{highestDay.totalSpent.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                     </div>
-                    <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-800">
-                        <p className="text-xs text-gray-500 mb-1">Lowest Day</p>
-                        <p className="text-sm font-semibold text-emerald-400">₦{lowestDay.totalSpent.toFixed(2)}</p>
+                    <div className="bg-slate-900/50 rounded-lg p-2 sm:p-3 border border-slate-800">
+                        <p className="text-xs text-gray-500 mb-0.5 sm:mb-1">Lowest Day</p>
+                        <p className="text-xs sm:text-sm font-semibold text-emerald-400 truncate">₦{lowestDay.totalSpent.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
                     </div>
                 </div>
             </div>
@@ -97,7 +97,17 @@ export const SpendingChart = ({ data }: SpendingChartProps) => {
                         tick={{ fontSize: 11, fill: '#94a3b8' }}
                         tickLine={false}
                         axisLine={{ stroke: '#334155' }}
-                        tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        tickFormatter={(value) => {
+                            // Parse date string properly to avoid timezone issues
+                            // If value is already a date string like "2026-01-05", split it
+                            const parts = value.split('-');
+                            if (parts.length === 3) {
+                                const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                                return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                            }
+                            // Fallback for other formats
+                            return new Date(value + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                        }}
                     />
                     <YAxis
                         stroke="#64748b"
@@ -117,8 +127,16 @@ export const SpendingChart = ({ data }: SpendingChartProps) => {
                         }}
                         itemStyle={{ color: '#fff', fontSize: '13px', fontWeight: '500' }}
                         labelStyle={{ color: '#94a3b8', fontSize: '12px', marginBottom: '4px' }}
-                        formatter={(value: number) => [`₦${value.toFixed(2)}`, 'Spent']}
-                        labelFormatter={(label) => new Date(label).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                        formatter={(value) => [`₦${Number(value ?? 0).toFixed(2)}`, 'Spent']}
+                        labelFormatter={(label) => {
+                            // Parse date properly to avoid timezone issues
+                            const parts = label.split('-');
+                            if (parts.length === 3) {
+                                const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                                return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+                            }
+                            return new Date(label + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+                        }}
                     />
                     <Area
                         type="monotone"

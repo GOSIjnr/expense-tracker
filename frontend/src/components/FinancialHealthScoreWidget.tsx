@@ -61,7 +61,7 @@ export const FinancialHealthScoreWidget = () => {
         <div className="bg-surface border border-slate-800 rounded-xl p-6">
             <h3 className="font-semibold text-white mb-6 text-lg">Financial Health Score</h3>
 
-            <div className="flex items-center gap-8">
+            <div className="flex flex-col sm:flex-row items-center gap-8">
                 {/* Circular Progress */}
                 <div className="relative w-[160px] h-[160px]">
                     <svg className="w-full h-full transform -rotate-90">
