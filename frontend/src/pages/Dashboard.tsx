@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BarChart3, TrendingUp, TrendingDown, DollarSign, Loader2, Plus, Sparkles, ArrowRight, PiggyBank, Receipt, Target, Percent } from 'lucide-react';
 import { dashboardService, type DashboardSummary } from '../services/dashboardService';
-import { analyticsService, type FinancialHealthScore, type PredictiveInsights, type SpendingForecast } from '../services/analyticsService';
+import { analyticsService, type FinancialHealthScore, type PredictiveInsights, type SpendingForecast, type Achievement } from '../services/analyticsService';
 import { incomeService, type IncomeSummary } from '../services/incomeService';
 import { SpendingChart } from '../components/SpendingChart';
 import { TopSpendingWidget } from '../components/TopSpendingWidget';
@@ -15,6 +15,7 @@ import { BudgetWarnings } from '../components/BudgetWarnings';
 import { GoalPredictions } from '../components/GoalPredictions';
 import { SmartRecommendations } from '../components/SmartRecommendations';
 import { SpendingForecastWidget } from '../components/SpendingForecastWidget';
+import { AIInsightsWidget } from '../components/AIInsightsWidget';
 import { authService } from '../services/authService';
 
 const StatCard = ({ title, value, icon: Icon, trend, isEmpty }: any) => {
@@ -97,6 +98,8 @@ const QuickActionCard = ({ icon: Icon, title, description, to, gradient }: any) 
 export const Dashboard = () => {
     const [summary, setSummary] = useState<DashboardSummary | null>(null);
     const [incomeSummary, setIncomeSummary] = useState<IncomeSummary | null>(null);
+    const [predictions, setPredictions] = useState<PredictiveInsights | null>(null);
+    const [achievements, setAchievements] = useState<Achievement[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const user = authService.getCurrentUser();
@@ -104,12 +107,16 @@ export const Dashboard = () => {
     useEffect(() => {
         const fetchDashboard = async () => {
             try {
-                const [data, income] = await Promise.all([
+                const [data, income, preds, achievements] = await Promise.all([
                     dashboardService.getSummary(),
-                    incomeService.getSummary()
+                    incomeService.getSummary(),
+                    analyticsService.getPredictions(),
+                    analyticsService.getAchievements()
                 ]);
                 setSummary(data);
                 setIncomeSummary(income);
+                setPredictions(preds);
+                setAchievements(achievements);
             } catch (err) {
                 console.error('Failed to fetch dashboard data', err);
                 setError('Failed to load dashboard data');
@@ -157,47 +164,7 @@ export const Dashboard = () => {
             .sort((a, b) => b.amount - a.amount);
     };
 
-    // Generate smart insights
-    const generateInsights = () => {
-        const insights: any[] = [];
-
-        if (summary) {
-            // Budget insights
-            if (summary.budgets && summary.budgets.length > 0) {
-                const overBudget = summary.budgets.filter((b: any) => b.spentAmount > b.budgetedAmount);
-                if (overBudget.length > 0) {
-                    const first = overBudget[0];
-                    const diff = first.spentAmount - first.budgetedAmount;
-                    insights.push({
-                        type: 'warning',
-                        message: `Over budget on ${first.category} by ₦${diff.toFixed(0)}`
-                    });
-                }
-            }
-
-            // Savings insights
-            if (summary.totalSavings > 0 && summary.totalExpenses > 0) {
-                const savingsRate = (summary.totalSavings / (summary.totalExpenses + summary.totalSavings)) * 100;
-                if (savingsRate > 20) {
-                    insights.push({
-                        type: 'success',
-                        message: `Great job! You're saving ${savingsRate.toFixed(0)}% of your income`
-                    });
-                }
-            }
-
-            // Goals insight
-            if (summary.savingGoals && summary.savingGoals.length > 0) {
-                const activeGoals = summary.savingGoals.length;
-                insights.push({
-                    type: 'info',
-                    message: `You have ${activeGoals} active saving goal${activeGoals > 1 ? 's' : ''} - keep pushing!`
-                });
-            }
-        }
-
-        return insights;
-    };
+    // Removed local generateInsights()
 
     // Mock month comparison (in future, get from backend)
     const monthComparison = {
@@ -216,35 +183,10 @@ export const Dashboard = () => {
         }
     };
 
-    // Mock achievements
-    const achievements = [
-        {
-            id: '1',
-            title: 'First Goal',
-            description: 'Created your first saving goal',
-            icon: 'target',
-            earned: (summary?.savingGoals?.length || 0) > 0
-        },
-        {
-            id: '2',
-            title: 'Budget Master',
-            description: 'Created 3 budgets',
-            icon: 'trophy',
-            earned: (summary?.budgets?.length || 0) >= 3
-        },
-        {
-            id: '3',
-            title: 'Expense Tracker',
-            description: 'Log 10 expenses',
-            icon: 'zap',
-            earned: false,
-            progress: summary?.recentTransactions?.length || 0,
-            total: 10
-        }
-    ];
+    // Mock achievements removed
 
     const categorySpending = calculateCategorySpending();
-    const insights = generateInsights();
+    // Removed insights call
     const categoryChartData = categorySpending.slice(0, 6).map(c => ({
         name: c.category,
         value: c.amount,
@@ -379,14 +321,15 @@ export const Dashboard = () => {
                 />
             </div>
 
-            {/* Financial Health Score */}
-            <div className="my-12">
-                <FinancialHealthScoreWidget />
-            </div>
+            {/* AI Insights & Financial Health Section */}
+            {!isEmptyAccount && (
+                <div className="space-y-8">
+                    {/* Premium AI Advisor */}
+                    {predictions && <AIInsightsWidget insights={predictions} />}
 
-            {/* Smart Insights */}
-            {!isEmptyAccount && insights.length > 0 && (
-                <SmartInsights insights={insights} />
+                    {/* Health Score */}
+                    <FinancialHealthScoreWidget />
+                </div>
             )}
 
             {/* Content Area */}

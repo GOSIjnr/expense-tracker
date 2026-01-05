@@ -352,13 +352,45 @@ public class AnalyticsService(ExpenseTrackerDbContext dbContext)
             .ToListAsync())
             .ToDictionary(b => b.Category, b => b.Limit);
 
-        var daysInMonth = DateTime.DaysInMonth(year, month);
-
         return categoryExpenses.Select(cat =>
         {
             var dailyAvg = daysElapsed > 0 ? cat.Current / daysElapsed : 0;
-            var projected = cat.Current + (dailyAvg * daysRemaining);
+            // Adaptive Forecast: 
+            // If expense type is usually fixed (Utilities/Education), assumption is different, but for now we apply general damping
+            // If early in month, we dampen the projection to avoid alarmist numbers
+            
             var budgetLimit = budgets.GetValueOrDefault(cat.Category, 0);
+            
+            // Psychology Factor: If user has spent > 80% of budget, they will likely slow down.
+            // If they are OverBudget, projection shouldn't keep growing linearly as if they will continue spending.
+            
+            double projected;
+            
+            if (budgetLimit > 0)
+            {
+                if (cat.Current > budgetLimit)
+                {
+                    // Already exceeded. Assume minimal increase (10% more) rather than full linear
+                    projected = cat.Current * 1.05; 
+                }
+                else
+                {
+                    // Safe Zone: Use Linear
+                    projected = cat.Current + (dailyAvg * daysRemaining);
+                    
+                    // Clamp: If linear projection is wildly over budget (> 200%), dampen it 
+                    // assuming the user will react to the "running out of money" signal.
+                    if (projected > budgetLimit * 1.5)
+                    {
+                        projected = cat.Current + (budgetLimit - cat.Current) + (dailyAvg * daysRemaining * 0.5);
+                    }
+                }
+            }
+            else
+            {
+                // No budget, just linear
+                projected = cat.Current + (dailyAvg * daysRemaining);
+            }
 
             return new CategoryForecastDto
             {
@@ -374,19 +406,58 @@ public class AnalyticsService(ExpenseTrackerDbContext dbContext)
 
     private List<BudgetWarningDto> GenerateBudgetWarnings(SpendingForecastDto forecast, List<Budget> budgets)
     {
-        return forecast.CategoryForecasts
-            .Where(cf => cf.WillExceedBudget)
-            .Select(cf => new BudgetWarningDto
+        var warnings = new List<BudgetWarningDto>();
+        var currentDate = DateTime.UtcNow;
+        var daysInMonth = DateTime.DaysInMonth(currentDate.Year, currentDate.Month);
+        var daysRemaining = daysInMonth - currentDate.Day;
+        
+        // Avoid division by zero
+        if (daysRemaining <= 0) daysRemaining = 1;
+
+        foreach(var cf in forecast.CategoryForecasts)
+        {
+            if (cf.BudgetLimit > 0)
             {
-                Category = cf.Category,
-                BudgetLimit = cf.BudgetLimit,
-                CurrentSpending = cf.Current,
-                ProjectedTotal = cf.Projected,
-                ExcessAmount = cf.ExcessAmount,
-                Severity = cf.ExcessAmount > cf.BudgetLimit * 0.2 ? "critical" : "warning",
-                Message = $"Projected to exceed {cf.Category} budget by ₦{cf.ExcessAmount:N0}"
-            })
-            .ToList();
+                 // Actionable Daily Limit Logic
+                 var remainingBudget = cf.BudgetLimit - cf.Current;
+                 var safeDailySpend = remainingBudget > 0 ? remainingBudget / daysRemaining : 0;
+                 var currentDailyAvg = cf.Current / Math.Max(1, currentDate.Day);
+                 
+                 // Trigger warning if they are burning cash too fast
+                 // Buffer: 1.2x allows for some variance
+                 if (cf.Current > cf.BudgetLimit)
+                 {
+                     // Already burned
+                     warnings.Add(new BudgetWarningDto
+                     {
+                        Category = cf.Category,
+                        BudgetLimit = cf.BudgetLimit,
+                        CurrentSpending = cf.Current,
+                        ProjectedTotal = cf.Projected,
+                        ExcessAmount = cf.Projected - cf.BudgetLimit,
+                        Severity = "critical",
+                        Message = $"Budget exceeded! Try to cut spending on {cf.Category} for the rest of the month."
+                     });
+                 }
+                 else if (currentDailyAvg > safeDailySpend * 1.1) 
+                 {
+                     // On track to burn
+                     warnings.Add(new BudgetWarningDto
+                     {
+                        Category = cf.Category,
+                        BudgetLimit = cf.BudgetLimit,
+                        CurrentSpending = cf.Current,
+                        ProjectedTotal = cf.Projected,
+                        ExcessAmount = cf.Projected - cf.BudgetLimit,
+                        Severity = currentDailyAvg > safeDailySpend * 1.5 ? "critical" : "warning",
+                        // Actionable Message
+                        Message = $"Spending {currentDailyAvg:N0}/day on {cf.Category}. Limit to {safeDailySpend:N0}/day to stay on track."
+                     });
+                 }
+            }
+        }
+        
+        return warnings;
     }
 
     private List<GoalPredictionDto> GenerateGoalPredictions(List<SavingGoal> goals)
@@ -428,8 +499,8 @@ public class AnalyticsService(ExpenseTrackerDbContext dbContext)
                 {
                     Type = "budget",
                     Category = cf.Category,
-                    Message = $"Consider setting a budget of ₦{cf.Projected * 1.1:N0} for {cf.Category}",
-                    SuggestedAmount = cf.Projected * 1.1,
+                    Message = $"Consider setting a budget of ₦{cf.Projected * 0.9:N0} for {cf.Category}", // Suggest 90% of projected
+                    SuggestedAmount = cf.Projected * 0.9,
                     Priority = "medium"
                 });
             }
@@ -452,18 +523,108 @@ public class AnalyticsService(ExpenseTrackerDbContext dbContext)
     private async Task<List<SavingsOpportunityDto>> GenerateSavingsOpportunities(Guid userId)
     {
         var trends = await GetCategoryTrendsAsync(userId);
+        var budgets = await _dbContext.Budgets.Where(b => b.UserId == userId).ToListAsync();
+        
+        var opportunities = new List<SavingsOpportunityDto>();
 
-        return trends
-            .Where(t => t.ChangePercentage > 20) // Increasing by >20%
-            .Select(t => new SavingsOpportunityDto
+        // 1. Trend Analysis (Spike detection)
+        foreach(var t in trends.Where(t => t.ChangePercentage > 20))
+        {
+            opportunities.Add(new SavingsOpportunityDto
             {
                 Category = t.Category.ToString(),
                 CurrentSpending = t.CurrentMonthTotal,
                 RecommendedReduction = t.CurrentMonthTotal * 0.15,
                 PotentialMonthlySavings = t.CurrentMonthTotal * 0.15,
                 Message = $"Reduce {t.Category} spending by 15% to save ₦{t.CurrentMonthTotal * 0.15:N0}/month"
-            })
-            .Take(3)
-            .ToList();
+            });
+        }
+        
+        // 2. Under-budget savings
+        // If user consistently spends WAY less than budget, suggest moving difference to savings
+        foreach(var budget in budgets)
+        {
+             // This logic needs historical data, for now simplified.
+        }
+
+        return opportunities.Take(3).ToList();
+    }
+
+    /// <summary>
+    /// Calculate user achievements and badges
+    /// </summary>
+    public async Task<List<AchievementDto>> GetAchievementsAsync(Guid userId)
+    {
+        var achievements = new List<AchievementDto>();
+
+        // Data fetching
+        var expenses = await _dbContext.Expenses.Where(e => e.UserId == userId).ToListAsync();
+        var budgets = await _dbContext.Budgets.Where(b => b.UserId == userId).ToListAsync();
+        var goals = await _dbContext.SavingGoals.Where(g => g.UserId == userId && !g.IsArchived).ToListAsync();
+        
+        // 1. First Steps (Log first expense)
+        achievements.Add(new AchievementDto
+        {
+            Id = "first-steps",
+            Title = "First Steps",
+            Description = "Log your first expense to start tracking",
+            Icon = "zap",
+            Earned = expenses.Count > 0,
+            Progress = Math.Min(expenses.Count, 1),
+            Total = 1
+        });
+
+        // 2. Budget Master (Create 3 budgets)
+        achievements.Add(new AchievementDto
+        {
+            Id = "budget-master",
+            Title = "Budget Master",
+            Description = "Create at least 3 budgets categories",
+            Icon = "trophy",
+            Earned = budgets.Count >= 3,
+            Progress = Math.Min(budgets.Count, 3),
+            Total = 3
+        });
+
+        // 3. Goal Crusher (Complete 1 goal)
+        var completedGoals = goals.Count(g => g.CurrentAmount >= g.TargetAmount);
+        achievements.Add(new AchievementDto
+        {
+            Id = "goal-crusher",
+            Title = "Goal Crusher",
+            Description = "Successfully complete a saving goal",
+            Icon = "award",
+            Earned = completedGoals > 0,
+            Progress = Math.Min(completedGoals, 1),
+            Total = 1
+        });
+
+        // 4. Super Saver (Total savings > 100,000 OR Rate > 20%)
+        // For MVP, checking if they have a Savings Category with transactions
+        var savings = expenses.Where(e => e.Category == ExpenseCategory.Savings).Sum(e => e.Amount);
+        achievements.Add(new AchievementDto
+        {
+            Id = "super-saver",
+            Title = "Super Saver",
+            Description = "Save a total of ₦100,000",
+            Icon = "star",
+            Earned = savings >= 100000,
+            Progress = Math.Min(savings, 100000),
+            Total = 100000
+        });
+
+        // 5. Consistent Tracker (Log 50 expenses)
+        achievements.Add(new AchievementDto
+        {
+            Id = "consistent-tracker",
+            Title = "Consistent Tracker",
+            Description = "Log 50 total expenses",
+            Icon = "trending",
+            Earned = expenses.Count >= 50,
+            Progress = Math.Min(expenses.Count, 50),
+            Total = 50
+        });
+
+        return achievements;
     }
 }
