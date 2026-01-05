@@ -34,6 +34,11 @@ public class ExpenseTrackerDbContext(DbContextOptions<ExpenseTrackerDbContext> o
     public DbSet<SavingGoalContribution> SavingGoalContributions { get; set; }
 
     /// <summary>
+    /// Gets or sets the Income records table.
+    /// </summary>
+    public DbSet<Income> Incomes { get; set; }
+
+    /// <summary>
     /// Configures entity relationships and schema details using Fluent API.
     /// </summary>
     /// <param name="modelBuilder">Provides a simple API for configuring EF Core models.</param>
@@ -99,6 +104,27 @@ public class ExpenseTrackerDbContext(DbContextOptions<ExpenseTrackerDbContext> o
             entity.HasOne(c => c.Expense)
                 .WithMany(e => e.Contributions)
                 .HasForeignKey(c => c.ExpenseId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // configure income entity
+        modelBuilder.Entity<Income>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+
+            entity.Property(i => i.Source)
+                .HasConversion<string>()
+                .IsRequired();
+
+            entity.Property(i => i.Frequency)
+                .HasConversion<string>();
+
+            entity.Property(i => i.Amount).IsRequired();
+            entity.Property(i => i.UserId).IsRequired();
+
+            entity.HasOne(i => i.User)
+                .WithMany()
+                .HasForeignKey(i => i.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

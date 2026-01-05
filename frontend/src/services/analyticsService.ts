@@ -111,29 +111,42 @@ export interface SavingsOpportunity {
 }
 
 // Service
+// Note: Analytics controller uses /api/Analytics (not versioned), so we use full URL
+const ANALYTICS_BASE = 'http://localhost:5068/api/Analytics';
+
 export const analyticsService = {
     getHealthScore: async (): Promise<FinancialHealthScore> => {
-        const response = await api.get<FinancialHealthScore>('/analytics/health-score');
+        const response = await api.get<FinancialHealthScore>(`${ANALYTICS_BASE}/health-score`, {
+            baseURL: '' // Override the default baseURL
+        });
         return response.data;
     },
 
     getSpendingPatterns: async (): Promise<SpendingPatterns> => {
-        const response = await api.get<SpendingPatterns>('/analytics/spending-patterns');
+        const response = await api.get<SpendingPatterns>(`${ANALYTICS_BASE}/spending-patterns`, {
+            baseURL: ''
+        });
         return response.data;
     },
 
     getCategoryTrends: async (): Promise<CategoryTrend[]> => {
-        const response = await api.get<CategoryTrend[]>('/analytics/category-trends');
+        const response = await api.get<CategoryTrend[]>(`${ANALYTICS_BASE}/category-trends`, {
+            baseURL: ''
+        });
         return response.data;
     },
 
     getForecast: async (): Promise<SpendingForecast> => {
-        const response = await api.get<SpendingForecast>('/analytics/forecast');
+        const response = await api.get<SpendingForecast>(`${ANALYTICS_BASE}/forecast`, {
+            baseURL: ''
+        });
         return response.data;
     },
 
     getPredictions: async (): Promise<PredictiveInsights> => {
-        const response = await api.get<PredictiveInsights>('/analytics/predictions');
+        const response = await api.get<PredictiveInsights>(`${ANALYTICS_BASE}/predictions`, {
+            baseURL: ''
+        });
         return response.data;
     },
 };

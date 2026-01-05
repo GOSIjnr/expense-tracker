@@ -4,9 +4,11 @@ import { Mail, Lock, User, ArrowRight, Wallet } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { authService } from '../services/authService';
+import { useToast } from '../context/ToastContext';
 
 export const Signup = () => {
     const navigate = useNavigate();
+    const toast = useToast();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -28,11 +30,35 @@ export const Signup = () => {
         setError('');
 
         try {
-            await authService.register(formData.username, formData.email, formData.password);
-            // Automatically login after register or redirect to login
-            navigate('/login');
+            const result = await authService.register(formData.username, formData.email, formData.password);
+
+            if (result.success) {
+                toast.success('Account Created!', 'Please sign in with your new credentials.');
+                navigate('/login');
+            } else {
+                // API returned success: false with a message
+                const errorMessage = result.message || 'Registration failed. Please try again.';
+                setError(errorMessage);
+            }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Registration failed');
+            // Extract error message from various sources
+            let errorMessage = 'An unexpected error occurred. Please try again.';
+
+            if (err.response?.data?.message) {
+                // API returned an error response with message
+                errorMessage = err.response.data.message;
+            } else if (err.apiError?.message) {
+                // Our enhanced API error handler caught this
+                errorMessage = err.apiError.message;
+            } else if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+                // Network error
+                errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+                toast.error('Connection Error', errorMessage);
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

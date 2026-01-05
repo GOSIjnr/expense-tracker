@@ -1,4 +1,4 @@
-import { LayoutDashboard, Wallet, PiggyBank, Receipt, LogOut, Menu, X, User } from 'lucide-react';
+import { LayoutDashboard, Wallet, PiggyBank, Receipt, LogOut, Menu, X, User, DollarSign } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { clsx } from 'clsx';
@@ -12,28 +12,32 @@ export const TopNavbar = () => {
     const navigation = [
         { name: 'Dashboard', href: '/', icon: LayoutDashboard },
         { name: 'Expenses', href: '/expenses', icon: Receipt },
+        { name: 'Income', href: '/income', icon: DollarSign },
         { name: 'Budgets', href: '/budgets', icon: Wallet },
         { name: 'Saving Goals', href: '/goals', icon: PiggyBank },
     ];
 
     return (
-        <header className="sticky top-0 z-50 w-full">
+        <header className="sticky top-0 z-50 w-full mb-8">
             {/* Main Navbar */}
-            <nav className="bg-slate-900/95 backdrop-blur-xl border-b border-slate-800/80 shadow-lg shadow-slate-950/20">
+            <nav className="glass-card-elevated border-b border-white/5 rounded-none">
                 <div className="container mx-auto px-6 lg:px-12">
-                    <div className="flex items-center justify-between h-16">
+                    <div className="flex items-center justify-between h-20">
                         {/* Logo */}
-                        <Link to="/" className="flex items-center space-x-2 group">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-shadow">
-                                <Wallet className="w-5 h-5 text-white" />
+                        <Link to="/" className="flex items-center space-x-3 group">
+                            <div className="relative w-10 h-10">
+                                <div className="absolute inset-0 bg-primary rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
+                                <div className="relative w-full h-full rounded-xl bg-gradient-to-br from-primary via-indigo-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
+                                    <Wallet className="w-5 h-5 text-white" />
+                                </div>
                             </div>
-                            <span className="text-xl font-bold bg-gradient-to-r from-white via-primary to-accent bg-clip-text text-transparent">
+                            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-primary-light to-accent-light">
                                 Expensify
                             </span>
                         </Link>
 
                         {/* Desktop Navigation */}
-                        <div className="hidden md:flex items-center space-x-1">
+                        <div className="hidden md:flex items-center p-1.5 rounded-2xl bg-slate-950/30 border border-white/5 backdrop-blur-md">
                             {navigation.map((item) => {
                                 const isActive = location.pathname === item.href;
                                 const Icon = item.icon;
@@ -42,69 +46,60 @@ export const TopNavbar = () => {
                                         key={item.name}
                                         to={item.href}
                                         className={clsx(
-                                            "relative flex items-center px-4 py-2 rounded-xl transition-all duration-300 group",
+                                            "relative flex items-center px-5 py-2.5 rounded-xl transition-all duration-300",
                                             isActive
-                                                ? "text-primary"
-                                                : "text-gray-400 hover:text-white"
+                                                ? "text-white shadow-lg"
+                                                : "text-gray-400 hover:text-white hover:bg-white/5"
                                         )}
                                     >
-                                        {/* Background glow for active */}
                                         {isActive && (
-                                            <div className="absolute inset-0 bg-primary/10 rounded-xl border border-primary/20" />
+                                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-indigo-600 opacity-100 shadow-[0_2px_20px_rgba(99,102,241,0.4)]" />
                                         )}
-
-                                        {/* Hover effect */}
-                                        <div className={clsx(
-                                            "absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300",
-                                            !isActive && "bg-slate-800/50"
-                                        )} />
-
                                         <Icon className={clsx(
-                                            "relative mr-2 h-4 w-4 transition-colors",
-                                            isActive ? "text-primary" : "text-gray-500 group-hover:text-white"
+                                            "relative mr-2.5 h-4.5 w-4.5 transition-transform duration-300",
+                                            isActive ? "scale-110" : ""
                                         )} />
                                         <span className="relative font-medium text-sm">{item.name}</span>
-
-                                        {/* Active indicator dot */}
-                                        {isActive && (
-                                            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-                                        )}
                                     </Link>
                                 );
                             })}
                         </div>
 
                         {/* Right Section - Profile & Mobile Menu */}
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center gap-4">
                             {/* Profile Dropdown */}
                             <div className="relative">
                                 <button
                                     onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                    className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800 hover:border-slate-600 transition-all duration-300 group"
+                                    className="flex items-center gap-3 p-1.5 rounded-full hover:bg-white/5 transition-colors border border-transparent hover:border-white/10"
                                 >
-                                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center border border-primary/20">
-                                        <User className="w-4 h-4 text-primary" />
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 border border-white/10 flex items-center justify-center shadow-inner relative overflow-hidden group">
+                                        <User className="w-5 h-5 text-gray-300 group-hover:text-white transition-colors" />
+                                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </div>
-                                    <span className="text-sm text-gray-300 group-hover:text-white transition-colors">Account</span>
                                 </button>
 
-                                {/* Profile Dropdown Menu */}
+                                {/* Dropdown Menu */}
                                 {isProfileOpen && (
                                     <>
                                         <div
-                                            className="fixed inset-0 z-40"
+                                            className="fixed inset-0 z-30"
                                             onClick={() => setIsProfileOpen(false)}
                                         />
-                                        <div className="absolute right-0 mt-2 w-48 py-2 bg-slate-800 border border-slate-700 rounded-xl shadow-xl shadow-slate-950/50 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="absolute right-0 mt-3 w-64 glass-card-elevated border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)] transform transition-all duration-200 z-40 p-2">
+                                            <div className="p-4 border-b border-white/5 mb-2">
+                                                <p className="text-sm font-medium text-gray-400">Signed in as</p>
+                                                <p className="text-white font-semibold truncate mt-0.5">{authService.getCurrentUser()?.email}</p>
+                                            </div>
                                             <button
                                                 onClick={() => {
                                                     authService.logout();
                                                     setIsProfileOpen(false);
                                                 }}
-                                                className="flex items-center w-full px-4 py-2.5 text-gray-300 hover:text-danger hover:bg-danger/10 transition-colors"
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group"
                                             >
-                                                <LogOut className="mr-3 h-4 w-4" />
-                                                <span className="text-sm font-medium">Sign Out</span>
+                                                <LogOut className="w-4 h-4 text-gray-500 group-hover:text-rose-500 transition-colors" />
+                                                Sign out
                                             </button>
                                         </div>
                                     </>
@@ -114,57 +109,58 @@ export const TopNavbar = () => {
                             {/* Mobile Menu Button */}
                             <button
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                                className="md:hidden p-2.5 bg-slate-800/50 rounded-xl text-gray-400 hover:text-white border border-slate-700/50 hover:border-slate-600 transition-all duration-300"
+                                className="md:hidden p-2.5 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
                             >
-                                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Mobile Navigation Menu */}
-                <div className={clsx(
-                    "md:hidden overflow-hidden transition-all duration-300 ease-in-out",
-                    isMobileMenuOpen ? "max-h-96 border-t border-slate-800/80" : "max-h-0"
-                )}>
-                    <div className="container mx-auto px-4 py-4 space-y-1">
-                        {navigation.map((item) => {
-                            const isActive = location.pathname === item.href;
-                            const Icon = item.icon;
-                            return (
-                                <Link
-                                    key={item.name}
-                                    to={item.href}
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className={clsx(
-                                        "flex items-center px-4 py-3 rounded-xl transition-all duration-200",
-                                        isActive
-                                            ? "bg-primary/10 text-primary border border-primary/20"
-                                            : "text-gray-400 hover:text-white hover:bg-slate-800/50"
-                                    )}
-                                >
-                                    <Icon className={clsx("mr-3 h-5 w-5", isActive ? "text-primary" : "text-gray-500")} />
-                                    <span className="font-medium">{item.name}</span>
-                                    {isActive && (
-                                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                                    )}
-                                </Link>
-                            );
-                        })}
 
-                        {/* Mobile Sign Out */}
+                {/* Mobile Menu */}
+                {isMobileMenuOpen && (
+                    <div className="md:hidden px-6 pb-6">
+                        <div className="mt-4 p-1.5 rounded-2xl bg-slate-950/30 border border-white/5 backdrop-blur-md flex flex-col space-y-1">
+                            {navigation.map((item) => {
+                                const isActive = location.pathname === item.href;
+                                const Icon = item.icon;
+                                return (
+                                    <Link
+                                        key={item.name}
+                                        to={item.href}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={clsx(
+                                            "relative flex items-center px-5 py-2.5 rounded-xl transition-all duration-300",
+                                            isActive
+                                                ? "text-white shadow-lg"
+                                                : "text-gray-400 hover:text-white hover:bg-white/5"
+                                        )}
+                                    >
+                                        {isActive && (
+                                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary to-indigo-600 opacity-100 shadow-[0_2px_20px_rgba(99,102,241,0.4)]" />
+                                        )}
+                                        <Icon className={clsx(
+                                            "relative mr-2.5 h-4.5 w-4.5 transition-transform duration-300",
+                                            isActive ? "scale-110" : ""
+                                        )} />
+                                        <span className="relative font-medium text-sm">{item.name}</span>
+                                    </Link>
+                                );
+                            })}
+                        </div>
                         <button
                             onClick={() => {
                                 authService.logout();
                                 setIsMobileMenuOpen(false);
                             }}
-                            className="flex items-center w-full px-4 py-3 text-gray-400 hover:text-danger hover:bg-danger/10 rounded-xl transition-colors mt-2 border-t border-slate-800 pt-4"
+                            className="flex items-center w-full px-4 py-3 text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors mt-4 border-t border-slate-800 pt-4"
                         >
                             <LogOut className="mr-3 h-5 w-5" />
                             <span className="font-medium">Sign Out</span>
                         </button>
                     </div>
-                </div>
+                )}
             </nav>
         </header>
     );

@@ -112,19 +112,26 @@ internal class DashboardService(ExpenseTrackerDbContext dbContext) : IDashboardS
             .ToListAsync();
 
         // Daily trend for current month
-        List<DailySpendingDto> monthlyExpenseTrends = await _dbContext.Expenses
+        // Note: We use DateOfExpense.Date to get just the date portion without time,
+        // This avoids PostgreSQL's "AT TIME ZONE 'UTC'" conversion which shifts dates
+        var dailyExpenses = await _dbContext.Expenses
             .Where(e =>
                 e.UserId == userId &&
                 e.DateOfExpense.Month == currentMonth &&
                 e.DateOfExpense.Year == currentYear
             )
+            .ToListAsync(); // Fetch to memory first to avoid EF Core UTC conversion
+
+        // Group in memory to preserve dates as stored
+        List<DailySpendingDto> monthlyExpenseTrends = dailyExpenses
             .GroupBy(e => new DateOnly(e.DateOfExpense.Year, e.DateOfExpense.Month, e.DateOfExpense.Day))
             .Select(g => new DailySpendingDto
             {
                 Date = g.Key,
                 TotalSpent = g.Sum(e => e.Amount),
             })
-            .ToListAsync();
+            .OrderBy(d => d.Date)
+            .ToList();
 
         // Final response
         return new DashboardSummaryResponse

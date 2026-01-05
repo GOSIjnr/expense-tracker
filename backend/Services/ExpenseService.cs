@@ -16,6 +16,11 @@ internal class ExpenseService(ExpenseTrackerDbContext dbContext) : IExpenseServi
 
     public async Task<CreateExpenseResponse> CreateExpenseAsync(Guid userId, CreateExpenseRequest request)
     {
+        // Preserve the calendar date by extracting date components and creating UTC midnight
+        // This ensures "January 5th" stays "January 5th" in the database
+        var requestDate = request.DateOfExpense;
+        var dateAsUtc = new DateTime(requestDate.Year, requestDate.Month, requestDate.Day, 0, 0, 0, DateTimeKind.Utc);
+
         Expense expense = new()
         {
             Id = Guid.NewGuid(),
@@ -23,7 +28,7 @@ internal class ExpenseService(ExpenseTrackerDbContext dbContext) : IExpenseServi
             Category = request.Category,
             Amount = request.Amount,
             DateRecorded = DateTime.UtcNow,
-            DateOfExpense = request.DateOfExpense.ToUniversalTime(),
+            DateOfExpense = dateAsUtc, // Store as UTC midnight for the given date
             PaymentMethod = request.PaymentMethod,
             Description = request.Description,
         };
