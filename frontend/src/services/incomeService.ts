@@ -1,24 +1,28 @@
 import type { ApiResponse } from './api';
 import api from './api';
 
-export enum IncomeSource {
-    Salary = 'Salary',
-    Freelance = 'Freelance',
-    Business = 'Business',
-    Investments = 'Investments',
-    Rental = 'Rental',
-    Gift = 'Gift',
-    Refund = 'Refund',
-    Other = 'Other'
-}
+export const IncomeSource = {
+    Salary: 'Salary',
+    Freelance: 'Freelance',
+    Business: 'Business',
+    Investments: 'Investments',
+    Rental: 'Rental',
+    Gift: 'Gift',
+    Refund: 'Refund',
+    Other: 'Other'
+} as const;
 
-export enum RecurrenceFrequency {
-    Weekly = 'Weekly',
-    BiWeekly = 'BiWeekly',
-    Monthly = 'Monthly',
-    Quarterly = 'Quarterly',
-    Annually = 'Annually'
-}
+export type IncomeSource = typeof IncomeSource[keyof typeof IncomeSource];
+
+export const RecurrenceFrequency = {
+    Weekly: 'Weekly',
+    BiWeekly: 'BiWeekly',
+    Monthly: 'Monthly',
+    Quarterly: 'Quarterly',
+    Annually: 'Annually'
+} as const;
+
+export type RecurrenceFrequency = typeof RecurrenceFrequency[keyof typeof RecurrenceFrequency];
 
 export interface Income {
     id: string;

@@ -24,12 +24,6 @@ export const MonthComparison = ({ currentMonth, lastMonth }: MonthComparisonProp
         return <Minus className="w-4 h-4" />;
     };
 
-    const getChangeColor = (change: number, inverse: boolean = false) => {
-        const isPositive = inverse ? change < 0 : change > 0;
-        if (Math.abs(change) < 5) return 'text-gray-400';
-        return isPositive ? 'text-emerald-400' : 'text-rose-400';
-    };
-
     return (
         <div className="bg-surface border border-slate-800 rounded-xl p-6">
             <h3 className="font-semibold text-white mb-4">This Month vs Last Month</h3>
