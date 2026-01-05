@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Filter, Calendar, Trash2, Edit2, Loader2, Receipt, TrendingDown, ArrowRight, Sparkles, Target, FileText, BarChart3, Lightbulb, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, Trash2, Edit2, Loader2, Receipt, TrendingDown, Sparkles, Target, FileText, BarChart3, Lightbulb, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -402,9 +402,13 @@ export const Expenses = () => {
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     </div>
                 ) : filteredExpenses.length === 0 ? (
-                    <div className="p-12 text-center text-gray-400">
-                        <p>No expenses matches your search.</p>
-                    </div>
+                    expenses.length === 0 ? (
+                        <EmptyState onAddClick={() => setIsModalOpen(true)} />
+                    ) : (
+                        <div className="p-12 text-center text-gray-400">
+                            <p>No expenses matches your search.</p>
+                        </div>
+                    )
                 ) : (
                     <>
                         {/* Desktop Table */}

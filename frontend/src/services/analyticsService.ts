@@ -81,6 +81,7 @@ export interface BudgetWarning {
     excessAmount: number;
     severity: string;
     message: string;
+    suggestedAction?: string;
 }
 
 export interface GoalPrediction {
@@ -92,12 +93,14 @@ export interface GoalPrediction {
     status: string;
     monthlyContributionNeeded: number;
     message: string;
+    suggestedAction?: string;
 }
 
 export interface Recommendation {
     type: string;
     category: string;
     message: string;
+    suggestedAction?: string;
     suggestedAmount?: number;
     priority: string;
 }
@@ -108,11 +111,15 @@ export interface SavingsOpportunity {
     recommendedReduction: number;
     potentialMonthlySavings: number;
     message: string;
+    suggestedAction?: string;
 }
 
 // Service
 // Note: Analytics controller uses /api/Analytics (not versioned), so we use full URL
-const ANALYTICS_BASE = 'http://localhost:5068/api/Analytics';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5068/api/v1';
+// Remove /v1 from the end if it exists, as Analytics controller is mapped to /api/Analytics
+const API_ROOT = BASE_URL.replace(/\/v1$/, '');
+const ANALYTICS_BASE = `${API_ROOT}/Analytics`;
 
 export const analyticsService = {
     getHealthScore: async (): Promise<FinancialHealthScore> => {

@@ -2,40 +2,28 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BarChart3, TrendingUp, TrendingDown, DollarSign, Loader2, Plus, Sparkles, ArrowRight, PiggyBank, Receipt, Target, Percent } from 'lucide-react';
 import { dashboardService, type DashboardSummary } from '../services/dashboardService';
-import { analyticsService, type FinancialHealthScore, type PredictiveInsights, type SpendingForecast, type Achievement } from '../services/analyticsService';
+import { analyticsService, type PredictiveInsights, type Achievement } from '../services/analyticsService';
 import { incomeService, type IncomeSummary } from '../services/incomeService';
 import { SpendingChart } from '../components/SpendingChart';
 import { TopSpendingWidget } from '../components/TopSpendingWidget';
 import { MonthComparison } from '../components/MonthComparison';
 import { CategoryBreakdownChart } from '../components/CategoryBreakdownChart';
-import { SmartInsights } from '../components/SmartInsights';
 import { AchievementBadges } from '../components/AchievementBadges';
 import { FinancialHealthScoreWidget } from '../components/FinancialHealthScoreWidget';
-import { BudgetWarnings } from '../components/BudgetWarnings';
-import { GoalPredictions } from '../components/GoalPredictions';
-import { SmartRecommendations } from '../components/SmartRecommendations';
-import { SpendingForecastWidget } from '../components/SpendingForecastWidget';
 import { AIInsightsWidget } from '../components/AIInsightsWidget';
 import { authService } from '../services/authService';
 
 const StatCard = ({ title, value, icon: Icon, trend, isEmpty }: any) => {
-    // Determined based on trend or type
-    let variant = 'glass-card';
-    let iconColor = 'text-primary';
-    let iconBg = 'bg-primary/10';
+    // Variant logic removed as unused
+    // let variant = 'glass-card';
+    // let iconColor = 'text-primary';
+    // let iconBg = 'bg-primary/10';
 
-    if (!isEmpty) {
-        if (trend === 'up' && (title.includes('Income') || title.includes('Savings') || title.includes('Flow'))) {
-            // Positive good
-            variant = 'stat-card-secondary';
-            iconColor = 'text-emerald-400';
-            iconBg = 'bg-emerald-500/10';
-        } else if (trend === 'down' && title.includes('Expenses')) {
-            // Negative good (expenses down) - actually usually we want green for good
-            // but let's stick to semantic colors
-            variant = 'stat-card-danger'; // or appropriate
-        }
-    }
+    // if (!isEmpty) {
+    //     if (trend === 'up' && (title.includes('Income') || title.includes('Savings') || title.includes('Flow'))) {
+    //         // Logic preserved in JSX
+    //     }
+    // }
 
     return (
         <div className={`glass-card p-6 border-transparent hover:border-white/10 transition-all duration-300 hover:transform hover:translate-y-[-2px] hover:shadow-lg group`}>

@@ -1,4 +1,4 @@
-import { AlertCircle, TrendingDown, TrendingUp, Target, Sparkles } from 'lucide-react';
+import { AlertCircle, TrendingDown, Target, Sparkles } from 'lucide-react';
 
 interface Insight {
     type: 'success' | 'warning' | 'info' | 'achievement';
