@@ -108,4 +108,21 @@ public class AnalyticsController(AnalyticsService analyticsService) : Controller
             return StatusCode(500, new { message = "Failed to generate predictions", error = ex.Message });
         }
     }
+    /// <summary>
+    /// Get user achievements
+    /// </summary>
+    [HttpGet("achievements")]
+    public async Task<ActionResult<List<AchievementDto>>> GetAchievements()
+    {
+        try
+        {
+            var userId = GetUserId();
+            var achievements = await _analyticsService.GetAchievementsAsync(userId);
+            return Ok(achievements);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Failed to get achievements", error = ex.Message });
+        }
+    }
 }

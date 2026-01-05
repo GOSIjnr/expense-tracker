@@ -149,4 +149,21 @@ export const analyticsService = {
         });
         return response.data;
     },
+
+    getAchievements: async (): Promise<Achievement[]> => {
+        const response = await api.get<Achievement[]>(`${ANALYTICS_BASE}/achievements`, {
+            baseURL: ''
+        });
+        return response.data;
+    },
 };
+
+export interface Achievement {
+    id: string;
+    title: string;
+    description: string;
+    icon: string;
+    earned: boolean;
+    progress: number;
+    total: number;
+}

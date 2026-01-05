@@ -20,7 +20,7 @@ export const TopNavbar = () => {
     return (
         <header className="sticky top-0 z-50 w-full mb-8">
             {/* Main Navbar */}
-            <nav className="glass-card-elevated border-b border-white/5 rounded-none">
+            <nav className="glass-card-elevated border-b border-white/5 rounded-none !overflow-visible">
                 <div className="container mx-auto px-6 lg:px-12">
                     <div className="flex items-center justify-between h-20">
                         {/* Logo */}
